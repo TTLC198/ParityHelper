@@ -46,6 +46,7 @@ class Bot:
             for member in response['items']:
                 if member['member_id'] == user_id and member['is_admin']:
                     res = True
+                    break
         except ApiError as e:
             print(f'is_user_admin_in_chat: {e.error}, {e.code}, user_id: {user_id}, chat_id: {chat_id}')
         return res
