@@ -13,7 +13,7 @@ def curr_week_msg() -> str:
 
 def start(bot: Bot):
     repository = Repository()
-    for event in bot.longpoll.listen():
+    for event in bot.listen():
         chat_id = event.chat_id
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
             # Greeting message when the bot has been added to the conversation.

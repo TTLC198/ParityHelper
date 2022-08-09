@@ -12,6 +12,14 @@ class Bot:
         self.__vk = self.__vk_session.get_api()
         self.longpoll = VkBotLongPoll(self.__vk_session, GROUP_ID)
 
+    def listen(self):
+        while True:
+            try:
+                for event in self.longpoll.listen():
+                    yield event
+            except ApiError as e:
+                print(f'listen: {e.error}, {e.code}')
+
     def get_chat_members(self, chat_id: int):
         res = None
         try:

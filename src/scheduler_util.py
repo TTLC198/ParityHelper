@@ -4,7 +4,7 @@ import logic
 
 from time import sleep
 
-from messages import *
+from messages import BOT_IS_NOT_ADMIN
 from config import TIME_ZONE_OFFSET
 from bot import Bot
 from repository import Repository
