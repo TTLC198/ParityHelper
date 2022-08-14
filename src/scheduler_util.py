@@ -28,3 +28,4 @@ def start(bot: Bot):
         next = now + dt.timedelta(days=7-now.weekday())
         next_monday = dt.datetime(next.year, next.month, next.day) - dt.timedelta(hours=TIME_ZONE_OFFSET)
         sleep((next_monday - now).total_seconds() + 1)
+        print(f'time now: {now}, next monday: {next_monday}')
