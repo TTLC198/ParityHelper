@@ -2,14 +2,10 @@ import logic
 
 from vk_api.bot_longpoll import VkBotEventType
 
-from config import GROUP_ID
 from messages import *
 from bot import Bot
 from repository import Repository
 
-
-def curr_week_msg() -> str:
-    return ODD_WEEK if logic.get_curr_week_parity() else EVEN_WEEK
 
 def start(bot: Bot):
     repository = Repository()
@@ -18,11 +14,12 @@ def start(bot: Bot):
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
             # Greeting message when the bot has been added to the conversation.
             if 'action' in event.message.keys() and event.message['action']['type'] == 'chat_invite_user':
-                bot.send_message(chat_id, GREETING + curr_week_msg())
+                bot.send_message(chat_id, GREETING + logic.curr_week_msg())
+                print(f'Bot is added to chat {chat_id}')
 
             # Message with setup instructions.
             elif ('@wchanger] помощь' in event.message.text or '@wchanger], помощь' in event.message.text):
-                bot.send_message(chat_id, SETTING + curr_week_msg())
+                bot.send_message(chat_id, SETTING + logic.curr_week_msg())
 
             # Setup process.
             elif '@wchanger]' in event.message.text:
@@ -42,11 +39,11 @@ def start(bot: Bot):
                             bot.send_message(chat_id, SUCCESS)
                             new_name = odd_week_name if logic.get_curr_week_parity() else even_week_name
                             bot.change_chat_title(chat_id, new_name)
+                            print(f'Bot is updated in chat {chat_id}')
                         else:
                             bot.send_message(chat_id, USER_IS_NOT_ADMIN)
                     else:
                         bot.send_message(chat_id, BOT_IS_NOT_ADMIN)
                 else:
                     bot.send_message(chat_id, ERROR)
-                    bot.send_message(chat_id, SETTING + curr_week_msg())
-        print(chat_id, event.message)
+                    bot.send_message(chat_id, SETTING + logic.curr_week_msg())

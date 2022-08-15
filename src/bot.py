@@ -34,6 +34,7 @@ class Bot:
             chat = self.__vk.messages.getConversationsById(peer_ids=2000000000+chat_id)['items']
             if chat != [] and chat[0]['chat_settings']['title'] != title:
                 self.__vk.messages.editChat(chat_id=chat_id, title=title)
+                print(f'changed chat title: chat_id={chat_id}, title={title}, res={res}')
         except ApiError as e:
             res = e.code
             print(f'change_chat_title: {e.error}, {e.code}, chat_id: {chat_id}')
@@ -51,7 +52,8 @@ class Bot:
             print(f'is_user_admin_in_chat: {e.error}, {e.code}, user_id: {user_id}, chat_id: {chat_id}')
         return res
 
-    def send_message(self, chat_id: int, message: str):
+    def send_message(self, chat_id: int, message: str) -> int:
+        res = 1
         try:
             self.__vk.messages.send(
                 chat_id=chat_id,
@@ -61,4 +63,7 @@ class Bot:
                 server=SERVER,
                 random_id=vk_api.utils.get_random_id())
         except ApiError as e:
+            res = e.code
             print(f'send_message: {e.error}, {e.code}, chat_id: {chat_id}')
+
+        return res
