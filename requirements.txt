@@ -1,0 +1,5 @@
+datetime~=5.0
+psycopg2~=2.9.5
+aiohttp~=3.8.4
+marshmallow~=3.19.0
+marshmallow-dataclass~=8.5.11

@@ -1,0 +1,55 @@
+version: "3.9"
+services:
+  app :
+    build: ./
+    container_name: app
+    restart: on-failure
+    command: python3 ./app.py
+    environment:
+      PYTHONUNBUFFERED: 1
+      SHIFT_PARITY: 0
+      TIME_ZONE_OFFSET: 0
+      BOT_RESTORE: 0
+      MAX_CHATS: 0
+      TG_TOKEN: ""           # your TG Bot token
+      DB_HOST: pg            # your TG Bot token
+      DB_PORT: 5432          # your TG Bot token
+      DB_NAME: postgres      # postgres database name
+      DB_USER: postgres      # postgres user name
+      DB_PASS: password      # postgres password
+    depends_on:
+      pg:
+        condition: service_healthy
+    networks:
+      - db_net
+
+  pg:
+    image: postgres:13.4-alpine
+    container_name: pg
+    hostname: pg
+    restart: on-failure
+    environment:
+      POSTGRES_DB: postgres         # postgres database name
+      POSTGRES_USER: postgres       # postgres user name
+      POSTGRES_PASSWORD: password   # postgres password
+      PG_DATA: /var/lib/postgresql/data/phelper/
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - db_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+
+networks:
+  db_net:
+    name: db_net
+    driver: bridge
