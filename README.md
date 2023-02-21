@@ -1,3 +1,18 @@
-# wChanger
+# ParityHelper
 
-VK Bot for changing a title of a group chat relative to the current week parity. In general, it changes chat title every Monday.
+Телеграм бот для смены названия чата в зависимости от четности недели.
+
+## Usage
+
+* Пригласить бота в чат
+* Сделать бота администратором чата (пользователю, взаимодействующему с ботом также необходимо быть админом)
+* Установи названия чата для разного типа недель "@parityhelper_bot Название чётной недели | Название нечётной недели"
+
+## Stack
+
+* python 3.9+
+* postgresql
+* docker-compose
+
+## Docs
+- [Deployment instructions](.docs/deployment.md)
