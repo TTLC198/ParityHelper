@@ -9,5 +9,6 @@ def get_curr_week_parity() -> bool:
     parity = (int(now.strftime('%W')) + SHIFT_PARITY) % 2 == 1
     return parity
 
+
 def curr_week_msg() -> str:
     return ODD_WEEK if get_curr_week_parity() else EVEN_WEEK

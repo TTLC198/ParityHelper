@@ -1,15 +1,15 @@
 import psycopg2
 
-from config import DB_URL
+from config import DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
 
 
 class Repository:
     def __init__(self):
-        self.__connection = psycopg2.connect(DB_URL)
+        self.__connection = psycopg2.connect(host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS)
         cursor = self.__connection.cursor()
 
         cursor.execute(
-            "CREATE TABLE IF NOT EXISTS chat (chat_id INTEGER, even_week_name TEXT, odd_week_name TEXT)")
+            "CREATE TABLE IF NOT EXISTS chat (chat_id bigint not null constraint chat_pk primary key, even_week_name TEXT, odd_week_name TEXT)")
         cursor.close()
 
         self.__connection.commit()

@@ -1,49 +1,50 @@
 import logic
-
-from vk_api.bot_longpoll import VkBotEventType
+import re
 
 from messages import *
-from bot import Bot
 from repository import Repository
+from bot import bot
 
 
-def start(bot: Bot):
+async def start(bot: bot):
     repository = Repository()
-    for event in bot.listen():
-        chat_id = event.chat_id
-        if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
+    async for event in bot.listen():
+        chat_id = event.message.chat.id
+        if event.message.chat.type != 'private':
             # Greeting message when the bot has been added to the conversation.
-            if 'action' in event.message.keys() and event.message['action']['type'] == 'chat_invite_user':
-                bot.send_message(chat_id, GREETING + logic.curr_week_msg())
-                print(f'Bot is added to chat {chat_id}')
+            if event.message.new_chat_members is not None:
+                if any((await bot.get_me()).id == x.id for x in event.message.new_chat_members):
+                    await bot.send_message(chat_id, GREETING + logic.curr_week_msg())
+                    print(f'bot is added to chat {chat_id}')
 
-            # Message with setup instructions.
-            elif ('@wchanger] помощь' in event.message.text or '@wchanger], помощь' in event.message.text):
-                bot.send_message(chat_id, SETTING + logic.curr_week_msg())
+            elif event.message.text is not None:
+                # Message with setup instructions.
+                if re.search('@parityhelper_bot.+(?:помощь|help)', event.message.text):
+                    await bot.send_message(chat_id, SETTING + logic.curr_week_msg())
 
-            # Setup process.
-            elif '@wchanger]' in event.message.text:
-                splitted = event.message.text.split('|')
-                # If setup message is correct.
-                if len(splitted) == 3:
-                    even_week_name = splitted[1].replace('@wchanger]', '').strip(',').strip()
-                    odd_week_name = splitted[2].strip()
-                    # If the bot is an admin.
-                    members = bot.get_chat_members(chat_id)
-                    if members:
-                        # If a user is an admin.
-                        user_id = event.message.from_id
-                        if bot.is_user_admin_in_chat(user_id, chat_id):
-                            # Repository update.
-                            repository.change_chat(chat_id, even_week_name, odd_week_name)
-                            bot.send_message(chat_id, SUCCESS)
-                            new_name = odd_week_name if logic.get_curr_week_parity() else even_week_name
-                            bot.change_chat_title(chat_id, new_name)
-                            print(f'Bot is updated in chat {chat_id}')
+                # Setup process.
+                elif '@parityhelper_bot' in event.message.text:
+                    splitted = event.message.text.replace('@parityhelper_bot', '').strip(',').split('|')
+                    # If setup message is correct.
+                    if len(splitted) == 2:
+                        even_week_name = splitted[0].strip()
+                        odd_week_name = splitted[1].strip()
+                        # If the bot is an admin.
+                        user_bot = await bot.get_me()
+                        if await bot.is_user_admin_in_chat(user_bot.id, chat_id):
+                            # If a user is an admin.
+                            user_id = event.message.message_from.id
+                            if await bot.is_user_admin_in_chat(user_id, chat_id):
+                                # Repository update.
+                                repository.change_chat(chat_id, even_week_name, odd_week_name)
+                                await bot.send_message(chat_id, SUCCESS)
+                                new_name = odd_week_name if logic.get_curr_week_parity() else even_week_name
+                                await bot.change_chat_title(chat_id, new_name)
+                                print(f'bot is updated in chat {chat_id}')
+                            else:
+                                await bot.send_message(chat_id, USER_IS_NOT_ADMIN)
                         else:
-                            bot.send_message(chat_id, USER_IS_NOT_ADMIN)
+                            await bot.send_message(chat_id, BOT_IS_NOT_ADMIN)
                     else:
-                        bot.send_message(chat_id, BOT_IS_NOT_ADMIN)
-                else:
-                    bot.send_message(chat_id, ERROR)
-                    bot.send_message(chat_id, SETTING + logic.curr_week_msg())
+                        await bot.send_message(chat_id, ERROR)
+                        await bot.send_message(chat_id, SETTING + logic.curr_week_msg())

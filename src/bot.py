@@ -1,69 +1,67 @@
-import vk_api
-
-from vk_api.bot_longpoll import VkBotLongPoll
-from vk_api.exceptions import ApiError
-
-from config import TOKEN, TS, KEY, SERVER, GROUP_ID
+from tg_api import tg_api
+from classes import User
+from config import TG_TOKEN
 
 
-class Bot:
+class bot:
     def __init__(self):
-        self.__vk_session = vk_api.VkApi(token=TOKEN)
-        self.__vk = self.__vk_session.get_api()
-        self.longpoll = VkBotLongPoll(self.__vk_session, GROUP_ID)
+        self.__tg = tg_api(TG_TOKEN)
 
-    def listen(self):
+    async def listen(self):
+        offset = 0
         while True:
             try:
-                for event in self.longpoll.listen():
-                    yield event
-            except ApiError as e:
-                print(f'listen: {e.error}, {e.code}')
+                events = await self.__tg.get_updates_in_objects(offset=offset, timeout=60)
+                for event in events.result:
+                    offset = event.update_id + 1
+                    if event.message is not None:
+                        yield event
+            except BaseException as e:
+                print(f'listen: {e}')
 
-    def get_chat_members(self, chat_id: int):
+    async def get_me(self) -> User:
+        try:
+            res_dict = await self.__tg.get_me()
+            return User.Schema().load(res_dict)
+        except BaseException as e:
+            print(f'get_chat_members: {e}')
+
+    async def get_chat_members(self, chat_id: int):
         res = None
         try:
-            res = self.__vk.messages.getConversationMembers(peer_id=2000000000+chat_id)
-        except ApiError as e:
-            print(f'get_chat_members: {e.error}, {e.code}, chat_id: {chat_id}')
+            res = await self.__tg.get_chat_admins(chat_id=chat_id)
+        except BaseException as e:
+            print(f'get_chat_members: {e}')
         return res
 
-    def change_chat_title(self, chat_id: int, title: str) -> int:
+    async def change_chat_title(self, chat_id: int, title: str) -> int:
         res = 1
         try:
-            chat = self.__vk.messages.getConversationsById(peer_ids=2000000000+chat_id)['items']
-            if chat != [] and chat[0]['chat_settings']['title'] != title:
-                self.__vk.messages.editChat(chat_id=chat_id, title=title)
+            chat = await self.__tg.get_chat(chat_id=chat_id)
+            if chat != [] and chat.title != title:
+                await self.__tg.set_chat_title(chat_id=chat_id, title=title)
                 print(f'changed chat title: chat_id={chat_id}, title={title}, res={res}')
-        except ApiError as e:
+        except BaseException as e:
             res = e.code
-            print(f'change_chat_title: {e.error}, {e.code}, chat_id: {chat_id}')
+            print(f'change_chat_title: {e}')
         return res
 
-    def is_user_admin_in_chat(self, user_id: int, chat_id: int) -> bool:
-        res = False
+    async def is_user_admin_in_chat(self, user_id: int, chat_id: int) -> bool:
         try:
-            response = self.__vk.messages.getConversationMembers(peer_id=2000000000+chat_id)
-            for member in response['items']:
-                if member['member_id'] == user_id and member['is_admin']:
-                    res = True
-                    break
-        except ApiError as e:
-            print(f'is_user_admin_in_chat: {e.error}, {e.code}, user_id: {user_id}, chat_id: {chat_id}')
-        return res
+            admins = await self.__tg.get_chat_admins(chat_id=chat_id)
+            return any(x['user']['id'] == user_id for x in admins)
+        except BaseException as e:
+            print(f'is_user_admin_in_chat: {e}')
+        return False
 
-    def send_message(self, chat_id: int, message: str) -> int:
+    async def send_message(self, chat_id: int, message: str) -> int:
         res = 1
         try:
-            self.__vk.messages.send(
+            await self.__tg.send_message(
                 chat_id=chat_id,
-                message=message,
-                key=KEY,
-                ts=TS,
-                server=SERVER,
-                random_id=vk_api.utils.get_random_id())
-        except ApiError as e:
-            res = e.code
-            print(f'send_message: {e.error}, {e.code}, chat_id: {chat_id}')
+                message=message)
+        except BaseException as e:
+            res = e
+            print(f'send_message: {e}')
 
         return res
